@@ -31,7 +31,12 @@ class _HomePageState extends State<HomePage> {
       ),
       body: TodoList(
         todos: todos,
-        onChanged: (index, value) {
+        onTitleUpdate: (index, value) {
+          setState(() {
+            todos[index]['title'] = value;
+          });
+        },
+        onChecked: (index, value) {
           setState(() {
             todos[index]['completed'] = value;
           });
@@ -50,12 +55,14 @@ class TodoList extends StatelessWidget {
   const TodoList({
     super.key,
     required this.todos,
-    required this.onChanged,
+    required this.onTitleUpdate,
+    required this.onChecked,
     required this.onRemove,
   });
 
   final List<Map<String, dynamic>> todos;
-  final void Function(int index, bool? value) onChanged;
+  final void Function(int index, String value) onTitleUpdate;
+  final void Function(int index, bool? value) onChecked;
   final ValueChanged<int> onRemove;
 
   @override
@@ -74,10 +81,20 @@ class TodoList extends StatelessWidget {
           background: const _DismissibleBackground(),
           confirmDismiss: (direction) => _confirmDismiss(context, direction),
           onDismissed: (_) => onRemove(index),
-          child: CheckboxListTile(
+          child: ListTile(
             title: Text(item['title']),
-            value: item['completed'],
-            onChanged: (value) => onChanged(index, value),
+            onTap: () async {
+              final result = await Navigator.of(context).pushNamed(
+                '/edit',
+                arguments: item['title'],
+              ) as String?;
+              if (result == null) return;
+              onTitleUpdate(index, result);
+            },
+            trailing: Checkbox(
+              value: item['completed'],
+              onChanged: (value) => onChecked(index, value),
+            ),
           ),
         );
       },
