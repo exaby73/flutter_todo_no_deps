@@ -27,17 +27,21 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
           children: [
             TextFormField(
               controller: controller,
+              autofocus: true,
               decoration: const InputDecoration(labelText: 'Title'),
+              onFieldSubmitted: (_) => _createTodo(),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(controller.text);
-              },
+              onPressed: _createTodo,
               child: const Text('Create'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _createTodo() {
+    Navigator.of(context).pop(controller.text);
   }
 }

@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
           if (result == null || result.isEmpty) return;
           setState(() {
             todos.insert(0, {
+              'id': (todos.lastOrNull?['id'] ?? 0) + 1,
               'title': result,
               'completed': false,
             });
@@ -35,6 +36,11 @@ class _HomePageState extends State<HomePage> {
             todos[index]['completed'] = value;
           });
         },
+        onRemove: (index) {
+          setState(() {
+            todos.removeAt(index);
+          });
+        },
       ),
     );
   }
@@ -45,10 +51,12 @@ class TodoList extends StatelessWidget {
     super.key,
     required this.todos,
     required this.onChanged,
+    required this.onRemove,
   });
 
   final List<Map<String, dynamic>> todos;
   final void Function(int index, bool? value) onChanged;
+  final ValueChanged<int> onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -60,12 +68,64 @@ class TodoList extends StatelessWidget {
       itemCount: todos.length,
       itemBuilder: (context, index) {
         final item = todos[index];
-        return CheckboxListTile(
-          title: Text(item['title']),
-          value: item['completed'],
-          onChanged: (value) => onChanged(index, value),
+        return Dismissible(
+          key: ValueKey(item['id']),
+          direction: DismissDirection.endToStart,
+          background: const _DismissibleBackground(),
+          confirmDismiss: (direction) => _confirmDismiss(context, direction),
+          onDismissed: (_) => onRemove(index),
+          child: CheckboxListTile(
+            title: Text(item['title']),
+            value: item['completed'],
+            onChanged: (value) => onChanged(index, value),
+          ),
         );
       },
+    );
+  }
+
+  Future<bool?> _confirmDismiss(
+    BuildContext context,
+    DismissDirection direction,
+  ) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Todo'),
+          content: const Text(
+            'Are you sure you want to delete this todo?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DismissibleBackground extends StatelessWidget {
+  const _DismissibleBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.red,
+      alignment: Directionality.of(context) == TextDirection.rtl
+          ? Alignment.centerLeft
+          : Alignment.centerRight,
+      child: const Padding(
+        padding: EdgeInsets.only(right: 8),
+        child: Icon(Icons.delete, color: Colors.white),
+      ),
     );
   }
 }
